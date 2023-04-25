@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NeuCamera</title>
+    <!-- Bootstrap -->
+    <link href="css/bootstrap-4.4.1.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  </head>
+
+  <!-- cover -->
+  <section>
+    <div class="jumbotron text-center mt-0">
+      <div class="container">
+        <div class="row">
+          <div class="col-12">
+            <h2>Inverting the Imaging Process by Learning an Implicit Camera Model</h2>
+            <h4 style="color:#5a6268;">CVPR 2023</h4>
+            <hr>
+            <h6>
+              <a href="https://xhuangcv.github.io/" target="_blank">Xin Huang</a><sup>1</sup>, 
+              <a href="https://qzhang-cv.github.io/" target="_blank">Qi Zhang</a><sup>2</sup>, 
+              <a href="" target="_blank">Ying Feng</a><sup>2</sup>,
+              <a href="http://users.cecs.anu.edu.au/~hongdong/" target="_blank">Hongdong Li</a><sup>3</sup>,
+              <a href="https://teacher.nwpu.edu.cn/qwang.html" target="_blank">Qing Wang</a><sup>1</sup>
+            </h6>
+            <p><sup>1</sup>Northwestern Polytechnical University &nbsp;&nbsp; 
+                <sup>2</sup>Tencent AI Lab &nbsp; &nbsp;
+                <sup>3</sup>Australian National University
+            <br>
+
+            <div class="row justify-content-center">
+              <div class="column">
+                  <p class="mb-5"><a class="btn btn-large btn-light" href="" role="button"  target="_blank">
+                    <i class="fa fa-file"></i> Paper</a> </p>
+              </div>
+              <div class="column">
+                <p class="mb-5"><a class="btn btn-large btn-light" href="" role="button"  target="_blank">
+                  <i class="fa fa-file"></i> arXiv</a> </p>
+              </div>
+              <div class="column">
+                  <p class="mb-5"><a class="btn btn-large btn-light" href="https://github.com/xhuangcv/neucam/" role="button" target="_blank">
+                    <i class="fa fa-github-alt"></i> Code (Coming Soon)</a> </p>
+              </div>
+<!--               <div class="column">
+                  <p class="mb-5"><a class="btn btn-large btn-light" href="" role="button">
+                    <i class="fa fa-file"></i> Supplementary</a> </p>
+              </div> -->
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- abstract -->
+  <section>
+    <div class="container">
+      <div class="row">
+        <div class="col-12 text-center">
+          <h3>Abstract</h3>
+            <hr style="margin-top:0px">
+                <img class="img-fluid" width="90%" src="images/overview.png" alt="Architechture">
+            <hr>
+          <p class="text-justify"> 
+            Representing visual signals with implicit coordinate-based neural networks, as an effective replacement 
+            of the traditional discrete signal representation, has gained considerable popularity in computer vision 
+            and graphics. In contrast to existing implicit neural representations which focus on modelling the scene 
+            only, this paper proposes a novel implicit camera model which represents the physical imaging process of 
+            a camera as a deep neural network.  We demonstrate the power of this new implicit camera model on two 
+            inverse imaging tasks: i) generating all-in-focus photos, and ii) HDR imaging.  Specifically, we devise 
+            an implicit blur generator and an implicit tone mapper to model the aperture and exposure of the camera's 
+            imaging process, respectively. Our implicit camera model is jointly learned together with implicit scene 
+            models under multi-focus stack and multi-exposure bracket supervision.   We have demonstrated the effectiveness 
+            of our new model on a large number of test images and videos, producing accurate and visually appealing 
+            all-in-focus and high dynamic range images.  In principle, our new implicit neural camera model has the 
+            potential to benefit a wide array of other inverse imaging tasks.  
+          </p> 
+        </div>
+      </div>
+    </div>
+  </section>
+  <br>
+
+    <!-- pipeline -->
+    <section>
+      <div class="container">
+        <div class="row">
+          <div class="col-12 text-center">
+              <h3>Pipeline Overview</h3>
+              <p class="text-justify">
+                In this paper, we propose an interesting component for implicit neural representations, an implicit camera model, 
+                to simulate the physical imaging process. In particular, our camera model contains an implicit blur generator module 
+                and an implicit tone mapper module, to estimate the point spread function and camera response function respectively. 
+                It is jointly optimized with scene models to invert the imaging process under the supervision of visual signals with 
+                different focuses and exposures.
+              </p>
+              <hr style="margin-top:0px">
+                  <img class="img-fluid" width="95%" src="images/pipeline.png" alt="Architechture">
+                  <!-- <img class="img-fluid" src="images/pipeline.png" alt="Architechture" style="width:512px;"> -->
+              <hr>
+          </div>
+        </div>
+      </div>
+    </section>
+    <br>
+
+  <!-- Video Deblurring -->
+  <section>
+    <div class="container">
+      <div class="row">
+        <div class="col-12 text-center">
+            <h3> Video Deblurring</h3>
+            <p class="text-justify">
+              Our implicit camera model is applicable to video enhancement combined with video scene representations. 
+              We adopt the layered neural atlases representation, which decomposes the video into a set of layered 2D atlases 
+              to deal with object motions and camera motions. We evaluate our model for video deblurring on Deep Video Deblurring (DVD) dataset.
+            </p>
+            <hr style="margin-top:0px">
+              <div class="cropped">
+                <video width="100%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+                <source src="images/video1.mp4" type="video/mp4">
+              </div>
+    
+              <div class="cropped">
+              <video width="100%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+                  <source src="images/video2.mp4" type="video/mp4">
+              </video>
+              </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+  <br>
+
+    <!-- Video HDR Imaging -->
+    <section>
+      <div class="container">
+        <div class="row">
+          <div class="col-12 text-center">
+              <h3>Video HDR Imaging</h3>
+              <p class="text-justify">
+                For the video HDR imaging task, the input is a video with alternating exposures. We show the results for HDR video reconstruction. 
+                We can see that our method recovers the texture of over-exposed areas based on information from other frames with a lower exposure.
+              </p>
+              <hr style="margin-top:0px">
+                <div class="cropped">
+                  <video width="100%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+                  <source src="images/video7.mp4" type="video/mp4">
+                </div>
+                <div class="cropped">
+                <video width="100%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+                    <source src="images/video8.mp4" type="video/mp4">
+                </video>
+                </div>
+  
+          </div>
+        </div>
+      </div>
+    </section>
+    <br>
+
+    <!-- Exposure & Focus Editing -->
+    <section>
+      <div class="container">
+        <div class="row">
+          <div class="col-12 text-center">
+              <h3>Exposure and Focus Editing</h3>
+              <p class="text-justify">
+                The other consequence of our implicit camera model is that it enables rendering images with modified camera settings. 
+                When we keep the blur generator and tone mapper during the inference, our method can control the focus and exposure 
+                of rendered images.
+              </p>
+              <hr style="margin-top:0px">
+              <video width="80%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+                <source src="images/video4.mp4" type="video/mp4">
+              </video>
+              <video width="80%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+                <source src="images/video6.mp4" type="video/mp4">
+            </video>
+
+          </div>
+        </div>
+      </div>
+    </section>
+    <br>
+
+
+
+
+  <!-- results video -->
+  <!-- <section>
+    <div class="container">
+      <div class="row">
+        <div class="col-12 text-center">
+            <h3>Results and Comparisons</h3>
+            <hr style="margin-top:0px">
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe style="clip-path: inset(1px 1px)" width="100%" height="100%" src="https://www.youtube.com/embed/GmxsW9L1O6s" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+            </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <br> -->
+
+  <!-- overview video
+  <section>
+    <div class="container">
+      <div class="row">
+        <div class="col-12 text-center">
+            <h3>Overview Video</h3>
+            <hr style="margin-top:0px">
+            <div class="embed-responsive embed-responsive-16by9">
+                <iframe style="clip-path: inset(1px 1px)" width="100%" height="100%" src="https://www.youtube.com/embed/VTEROu-Yz04" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+            </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <br> -->
+
+  <!-- citing -->
+  <div class="container">
+    <div class="row ">
+      <div class="col-12">
+          <h3>Citation</h3>
+          <hr style="margin-top:0px">
+              <pre style="background-color: #e9eeef;padding: 1.25em 1.5em">
+<code>@inproceedings{huang2023inverting,
+    title={Inverting the Imaging Process by Learning an Implicit Camera Model},
+    author={Xin, Huang and Qi, Zhang and Ying, Feng and Hongdong, Li and Qing, Wang},
+    booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+    year={2023}
+}</code></pre>
+          <hr>
+      </div>
+    </div>
+  </div>
+
+  <!-- ack -->
+  <!-- <div class="container">
+    <div class="row ">
+      <div class="col-12">
+          <h3>Acknowledgements</h3>
+          <hr style="margin-top:0px">
+          <p class="text-justify">
+          We thank Li Ma and Xiaoyu Li for their instructive and useful advices.
+          </p>
+          <hr>
+      </div>
+    </div>
+  </div> -->
+
+  <footer class="text-center" style="margin-bottom:10px">
+      Thanks to <a href="https://lioryariv.github.io/" target="_blank">Lior Yariv</a> for the website template.
+  </footer>
+
+  <script>
+    MathJax = {
+      tex: {inlineMath: [['$', '$'], ['\\(', '\\)']]}
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-713SR7NR2X"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-713SR7NR2X');
+  </script>
+
+</body>
+</html>
