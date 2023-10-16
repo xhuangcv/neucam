@@ -1,0 +1,107 @@
+### General training options ###
+logging_root='/apdcephfs/private_xanderhuang/results/logs_hdr/'
+tm_model_path = '/apdcephfs/private_xanderhuang/results/logs_hdr/20220405/man_111845/checkpoints/model_final.pth'
+experiment_name=PeopleTalking
+lr=1e-4
+num_epochs=100000
+epochs_til_ckpt=5000
+steps_til_summary=1000
+dataset=PeopleTalking
+sample_frac=2e-2
+seq_size = [3, 1000, 1500]
+# alpha_pretrain
+uv_pretrain
+pretrain_iters = 100
+uv_mapping_scale = 1.0
+use_random_gamma
+
+stage1=40000
+stage2=100000
+pre_hdr
+# deblur
+uv_mapping
+# split_layer
+# alpha_mlp
+learn_exp
+load_tm
+
+### All losses ###
+rigidity_loss
+sparsity_loss
+alpha_loss
+# mask_loss
+# flow_loss
+
+### Loss weights ###
+rigidity_loss_w=1e-2
+sparsity_loss_w=5e-3
+alpha_loss_w=1e-3
+mask_loss_w=2
+mask_loss_step=10000
+flow_loss_steps=10000
+rigidity_loss_steps=40000
+
+
+### Setting of model_atlas_b ###
+atlas_b_type = 'sine'
+atlas_b_mode = 'mlp'
+atlas_b_hidden_dim = 512
+atlas_b_num_layers = 3
+atlas_b_in_dim = 2
+atlas_b_out_dim = 3
+atlas_b_num_frequencies = 7
+
+### Setting of model_atlas_f ###
+atlas_f_type = 'sine'
+atlas_f_mode = 'mlp'
+atlas_f_hidden_dim = 512
+atlas_f_num_layers = 3
+atlas_f_in_dim = 2
+atlas_f_out_dim = 3
+atlas_f_num_frequencies = 7
+
+### Setting of model_uv_b ###
+uv_b_hidden_dim = 512
+uv_b_num_layers = 4
+uv_b_in_dim = 3
+uv_b_out_dim = 2
+uv_b_skip = [4]
+uv_b_last_func = 'tanh'
+# uv_b_use_encoding 
+# uv_b_num_frequencies
+
+### Setting of model_uv_f ###
+uv_f_hidden_dim=256
+uv_f_num_layers=8
+uv_f_in_dim = 3
+uv_f_out_dim = 2
+uv_f_skip = [4]
+uv_f_last_func = 'tanh'
+uv_f_use_encoding
+uv_f_num_frequencies = 3
+
+### Setting of model_alpha ###
+alpha_hidden_dim=512
+alpha_num_layers=4
+alpha_in_dim = 3
+alpha_out_dim = 1
+alpha_skip = [4]
+alpha_last_func = 'sigmoid'
+alpha_use_encoding
+alpha_num_frequencies = 3
+
+### Setting of model_blur ###
+blur_hidden_dim=256
+blur_num_layers=4
+blur_in_dim = 3
+blur_out_dim = 27 # 9 dims for kernel weights, 18 dims for xy shift 
+blur_skip = [4]
+blur_last_func = 'both'
+# blur_use_encoding
+# blur_num_frequencies = 3
+
+### For testing ###
+save_atlas
+save_gt
+save_frame
+# edited_video

@@ -1,0 +1,19 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    // "args": ["--config", "configs/fern.txt", "--render_only", "--render_test"]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            // "args": ["--dataset=girl", "--model_type=sine", "--max_frame=4","--experiment_name=debug", "--pre_hdr", "--learn_exp", "--uv_mapping", "--split_layer", "--alpha_mlp"]
+            // "args": ["--dataset=worker", "--experiment_name=worker_v7"]
+            "args": ["-c", "configs/test.txt", "--experiment_name=debug"]
+        }
+    ]
+}
