@@ -1,141 +1,94 @@
-# Implicit Neural Representations with Periodic Activation Functions
-### [Project Page](https://vsitzmann.github.io/siren) | [Paper](https://arxiv.org/abs/2006.09661) | [Data](https://drive.google.com/drive/folders/1_iq__37-hw7FJOEUK1tX7mdp8SKB368K?usp=sharing)
-[![Explore Siren in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/vsitzmann/siren/blob/master/explore_siren.ipynb)<br>
+# Inverting the Imaging Process by Learning an Implicit Camera Model
+### [Project Page](https://xhuangcv.github.io/neucam/) | [Paper](https://arxiv.org/abs/2304.12748) | [Data]() | [Results]()
+<br>
 
-[Vincent Sitzmann](https://vsitzmann.github.io/)\*,
-[Julien N. P. Martel](http://www.jmartel.net)\*,
-[Alexander W. Bergman](http://alexanderbergman7.github.io),
-[David B. Lindell](http://www.davidlindell.com/),
-[Gordon Wetzstein](https://stanford.edu/~gordonwz/)<br>
-Stanford University, \*denotes equal contribution
+[Xin Huang](https://xhuangcv.github.io/)<sup>1</sup>,
+[Qi Zhang](https://qzhang-cv.github.io/)<sup>2</sup>,
+[Ying Feng](https://scholar.google.com.tw/citations?user=PhkrqioAAAAJ&hl=zh-TW)<sup>2</sup>,
+[Hongdong Li](http://users.cecs.anu.edu.au/~hongdong/)<sup>3</sup>,
+[Qing Wang](https://teacher.nwpu.edu.cn/qwang.html)<sup>1</sup><br>
+<sup>1</sup>Northwestern Polytechnical University, <sup>2</sup>Tencent AI Lab, <sup>3</sup>Australian National University
 
-This is the official implementation of the paper "Implicit Neural Representations with Periodic Activation Functions".
+This is the official implementation of the paper "Inverting the Imaging Process by Learning an Implicit Camera Model". Our method, Neucam, is able to recover all-in-focus HDR images from images captured with multi-setting images (multi-exposure and multi-focus). Moreover, Neucam has the potential to benefit a wide array of other inverse imaging tasks such as video deblurring and video HDR Imaging.
 
-[![siren_video](https://img.youtube.com/vi/Q2fLWGBeaiI/0.jpg)](https://www.youtube.com/watch?v=Q2fLWGBeaiI)
+<p align="left">
+    <img src='https://xhuangcv.github.io/neucam/images/overview.png' width="600">
+</p>
 
 
-## Google Colab
-If you want to experiment with Siren, we have written a [Colab](https://colab.research.google.com/github/vsitzmann/siren/blob/master/explore_siren.ipynb).
-It's quite comprehensive and comes with a no-frills, drop-in implementation of SIREN. It doesn't require 
-installing anything, and goes through the following experiments / SIREN properties:
-* Fitting an image
-* Fitting an audio signal
-* Solving Poisson's equation
-* Initialization scheme & distribution of activations
-* Distribution of activations is shift-invariant
-* Periodicity & behavior outside of the training range. 
-
-## Tensorflow Playground
-You can also play arond with a tiny SIREN interactively, directly in the browser, via the Tensorflow Playground [here](https://dcato98.github.io/playground/#activation=sine). Thanks to [David Cato](https://github.com/dcato98) for implementing this! 
 
 ## Get started
-If you want to reproduce all the results (including the baselines) shown in the paper, the videos, point clouds, and 
-audio files can be found [here](https://drive.google.com/drive/folders/1_iq__37-hw7FJOEUK1tX7mdp8SKB368K?usp=sharing).
-
-You can then set up a conda environment with all dependencies like so:
+If you want to reproduce all the results shown in the paper, you can then set up a conda environment with all dependencies like so:
 ```
 conda env create -f environment.yml
-conda activate siren
+conda activate neucam
 ```
 
-## High-Level structure
-The code is organized as follows:
-* dataio.py loads training and testing data.
-* training.py contains a generic training routine.
-* modules.py contains layers and full neural network modules.
-* meta_modules.py contains hypernetwork code.
-* utils.py contains utility functions, most promintently related to the writing of Tensorboard summaries.
-* diff_operators.py contains implementations of differential operators.
-* loss_functions.py contains loss functions for the different experiments.
-* make_figures.py contains helper functions to create the convergence videos shown in the video.
-* ./experiment_scripts/ contains scripts to reproduce experiments in the paper.
+## Download NeuCam Dataset
+We have prepared several sample datasets for NeuCam training. You can download these test samples via the provided [link](). Once downloaded, please extract the files and place them in the `./dataset` directory of this GitHub repository. For instance, your file path should look something like this: `./dataset/MFME`.
+
+* **MFME** directory contains 4 real-world scenes and 4 synthetic scenes. Each scene contains 9 images of 3 different
+focuses and 3 different exposures. The real-world images are captured by a digital camera with a tripod, and the synthetic images are rendered in Blender.
+* **MF-static** directory contains 8 real-world scenes. Two images focusing on the foreground and background respectively are captured for each scene.
+* **ME-dynamic** directory contains 5 real-world dynamic scenes from the [HDR imaging dataset](https://web.ece.ucsb.edu/~psen/hdrvideo). Three images with different exposures are captured for each scene.
+* **Video-deblur** directory contains two videos from the [Deep Video Deblurring dataset](https://github.com/shuochsu/DeepVideoDeblurring), characterized by camera motion blur.
+* **Video-hdr** directory contains two videos from the [Deep HDR Video dataset](https://guanyingc.github.io/DeepHDRVideo-Dataset/), notable for their varying exposure levels.
 
 ## Reproducing experiments
-The directory `experiment_scripts` contains one script per experiment in the paper.
+The directory `experiment_scripts` contains scripts used for the experiments in our paper. The directory `configs` contains parameter settings for all these experiments. To keep track of your progress, the training code generates TensorBoard summaries and stores them in a "summaries" subdirectory located within the `logging_root`.
 
-To monitor progress, the training code writes tensorboard summaries into a "summaries"" subdirectory in the logging_root.
-
-### Image experiments
-The image experiment can be reproduced with
+### Training
+* The all-in-focus HDR imaging experiment can be reproduced with
 ```
-python experiment_scripts/train_img.py --model_type=sine
+python experiment_scripts/train_video.py -c configs/config_mfme_blender.txt # blender dataset
+python experiment_scripts/train_video.py -c configs/config_mfme_nikon.txt # nikon dataset
 ```
-The figures in the paper were made by extracting images from the tensorboard summaries. Example code how to do this can
-be found in the make_figures.py script.
-
-### Audio experiments
-This github repository comes with both the "counting" and "bach" audio clips under ./data.
-
-They can be trained with
+* The all-in-focus imaging experiment can be reproduced with
 ```
-python experiment_scipts/train_audio.py --model_type=sine --wav_path=<path_to_audio_file>
+python experiment_scripts/train_video.py -c configs/config_mf_static.txt
 ```
-
-### Video experiments
-The "bikes" video sequence comes with scikit-video and need not be downloaded. The cat video can be downloaded with the
-link above.
-
-To fit a model to a video, run
+* The HDR imaging experiment can be reproduced with
 ```
-python experiment_scipts/train_video.py --model_type=sine --experiment_name bikes_video
+python experiment_scripts/train_video.py -c configs/config_me_dynamic.txt
+```
+* The video deblurring experiment can be reproduced with
+```
+python experiment_scripts/train_video.py -c configs/config_video_deblur.txt
+```
+* The video HDR imaging experiment can be reproduced with
+```
+python experiment_scripts/train_video.py -c configs/config_video_hdr.txt
 ```
 
-### Poisson experiments
-For the poisson experiments, there are three separate scripts: One for reconstructing an image from its gradients 
-(train_poisson_grad_img.py), from its laplacian (train_poisson_lapl_image.py), and to combine two images 
-(train_poisson_gradcomp_img.py).
+Upon completion of the training, both the model and the results will be stored in the `./results` directory. Please note that the final all-in-focus and HDR results are produced post-inference.
 
-Some of the experiments were run using the BSD500 datast, which you can download [here](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/).
-
-### SDF Experiments
-To fit a Signed Distance Function (SDF) with SIREN, you first need a pointcloud in .xyz format that includes surface normals.
-If you only have a mesh / ply file, this can be accomplished with the open-source tool Meshlab.
-
-To reproduce our results, we provide both models of the Thai Statue from the 3D Stanford model repository and the living room used in our paper
-for download here.
-
-To start training a SIREN, run:
+### Inference
+To render the all-in-focus and HDR results, you can run
 ```
-python experiments_scripts/train_single_sdf.py --model_type=sine --point_cloud_path=<path_to_the_model_in_xyz_format> --batch_size=250000 --experiment_name=experiment_1
+python experiment_scipts/render_video.py -c <path_to_saved_results>/config.txt --checkpoint_path=<path_to_saved_results>
 ```
-This will regularly save checkpoints in the directory specified by the rootpath in the script, in a subdirectory "experiment_1". 
-The batch_size is typically adjusted to fit in the entire memory of your GPU. 
-Our experiments show that with a 256, 3 hidden layer SIREN one can set the batch size between 230-250'000 for a NVidia GPU with 12GB memory.
+The term `<path_to_saved_results>` refers to the specific location where the trained model and results are stored during the training process. An example of this could be `./results/20231018/Dog_145236`.
 
-To inspect a SDF fitted to a 3D point cloud, we now need to create a mesh from the zero-level set of the SDF. 
-This is performed with another script that uses a marching cubes algorithm (adapted from the DeepSDF github repo) 
-and creates the mesh saved in a .ply file format. It can be called with:
-```
-python experiments_scripts/test_single_sdf.py --checkpoint_path=<path_to_the_checkpoint_of_the_trained_model> --experiment_name=experiment_1_rec 
-```
-This will save the .ply file as "reconstruction.ply" in "experiment_1_rec" (be patient, the marching cube meshing step takes some time ;) )
-In the event the machine you use for the reconstruction does not have enough RAM, running test_sdf script will likely freeze. If this is the case, 
-please use the option --resolution=512 in the command line above (set to 1600 by default) that will reconstruct the mesh at a lower spatial resolution.
-
-The .ply file can be visualized using a software such as [Meshlab](https://www.meshlab.net/#download) (a cross-platform visualizer and editor for 3D models).
-
-### Helmholtz and wave equation experiments
-The helmholtz and wave equation experiments can be reproduced with the train_wave_equation.py and train_helmholtz.py scripts.
-
-## Torchmeta
-We're using the excellent [torchmeta](https://github.com/tristandeleu/pytorch-meta) to implement hypernetworks. We 
-realized that there is a technical report, which we forgot to cite - it'll make it into the camera-ready version!
+## Results
+We also offer results generated by our method. These can be downloaded using the provided [link](). Please note that all HDR results in the experiment have been tonemapped using [Photomatix](https://www.hdrsoft.com/). For visualization of HDR results, we recommend installing either [Phototmatix](https://www.hdrsoft.com/) or [Luminance HDR](http://qtpfsgui.sourceforge.net/).
 
 ## Citation
 If you find our work useful in your research, please cite:
 ```
-@inproceedings{sitzmann2019siren,
-    author = {Sitzmann, Vincent
-              and Martel, Julien N.P.
-              and Bergman, Alexander W.
-              and Lindell, David B.
-              and Wetzstein, Gordon},
-    title = {Implicit Neural Representations
-              with Periodic Activation Functions},
-    booktitle = {arXiv},
-    year={2020}
+@inproceedings{huang2023inverting,
+  title={Inverting the Imaging Process by Learning an Implicit Camera Model},
+  author={Huang, Xin and Zhang, Qi and Feng, Ying and Li, Hongdong and Wang, Qing},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={21456--21465},
+  year={2023}
 }
 ```
 
-## Contact
-If you have any questions, please feel free to email the authors.
+## Acknowledgments
+
+Our project is benefit from these great resources:
+
+- [Implicit Neural Representations with Periodic Activation Functions.](https://github.com/vsitzmann/siren/tree/master)
+- [Layered Neural Atlases for Consistent Video Editing.](https://github.com/ykasten/layered-neural-atlases)
+
+We are grateful for their contribution in sharing their code.

@@ -259,7 +259,29 @@ def write_psnr(pred_img, gt_img, writer, iter, prefix):
     writer.add_scalar(prefix + "ssim", np.mean(ssims), iter)
 
 
-def pre_train_mapping(model_mapping, shape, uv_mapping_scale=0.8, pretrain_iters=100, device='cuda'):
+def tonemapSimple(x):
+    return (torch.exp(x) / (torch.exp(x) + 1)) ** (1 / 2.2)
+
+def warm_tm(model, pretrain_iters=1000, device='cuda'):
+    optimizer_crf = torch.optim.Adam(model.parameters(), lr=5e-4)
+
+    for i in range(pretrain_iters):
+        optimizer_crf.zero_grad()
+        rand_radiance = torch.rand(1024, 3, requires_grad=True).to(device) * 3 # radiance in [0, 3]
+        rand_exposure = torch.rand(1024, 1, requires_grad=True).to(device) * 6 - 3.0 # radiance in [-3, 3]
+
+        gt_rgb = tonemapSimple(rand_radiance + rand_exposure)
+
+        rgb_l = model(rand_radiance, rand_exposure)
+        rgb_l = rgb_l / 2 + 0.5
+
+        loss = (rgb_l - gt_rgb).norm(dim=1).mean()
+        print(f"step {i} pre-train loss: {loss.item()}")
+        loss.backward()
+        optimizer_crf.step()
+    return model
+
+def warm_mapping(model_mapping, shape, uv_mapping_scale=0.8, pretrain_iters=100, device='cuda'):
     frames_num, img_h, img_w = shape
     optimizer_mapping = optim.Adam(model_mapping.parameters(), lr=1e-4)
     for i in range(pretrain_iters):
@@ -282,7 +304,7 @@ def pre_train_mapping(model_mapping, shape, uv_mapping_scale=0.8, pretrain_iters
             optimizer_mapping.step()
     return model_mapping
 
-def pre_train_alpha(model_alpha, dataset, pretrain_iters=1000, device='cuda'):
+def warm_alpha(model_alpha, dataset, pretrain_iters=1000, device='cuda'):
     frames_num, img_h, img_w = dataset.shape
     optimizer_mapping = optim.Adam(model_alpha.parameters(), lr=1e-4)
     mask_gt = torch.from_numpy(dataset.vid[..., 3:4]).to(device)
@@ -324,14 +346,14 @@ def save_atlas(model_b, model_f, atlase_h=360, atlase_w=640, batch_size=360*640,
         if model_f is not None:
             fg_atlas.append(torch.exp(model_f({'coords':idx_grid[:,i:i+batch_size,:]})['model_out'][..., 0:3]))
     bg_atlas = torch.cat(bg_atlas, 1).view(atlase_h, atlase_w, 3).detach().cpu().numpy()
-    if fg_atlas != []:
+    if len(fg_atlas) != 0:
         fg_atlas = torch.cat(fg_atlas, 1).view(atlase_h, atlase_w, 3).detach().cpu().numpy()
 
     max_radiance = np.max(bg_atlas)
     print(max_radiance)
     imageio.imwrite(os.path.join(root_path, exp_name + '_bg_atlas.png'), tonemap(bg_atlas/max_radiance))
     imageio.imwrite(os.path.join(root_path, exp_name + '_bg_atlas.hdr'), bg_atlas)
-    if fg_atlas != []:
+    if len(fg_atlas) != 0:
         imageio.imwrite(os.path.join(root_path, exp_name + '_fg_atlas.png'), tonemap(fg_atlas/max_radiance))
         imageio.imwrite(os.path.join(root_path, exp_name + '_fg_atlas.hdr'), fg_atlas)
     print('Done with atlases.')
@@ -377,7 +399,6 @@ def save_noise(model_noise, root_path, exp_name):
     plt.close()
     return
 
-# get rigidity loss as defined in Eq. 9 in the paper
 def get_rigidity_loss(src_coords, src_uv, model_mapping, shape, derivative_amount=1, uv_mapping_scale=1, mask=1):
 
     step_y = 2 / (shape[1] - 1) * derivative_amount
@@ -724,227 +745,67 @@ def evaluate_hdr(all_pred_hdr, gt_path, results_path):
 
 def load_data_path(scene):
     video_path = None
-    if scene == 'cat':
-        video_path = './data/video_512.npy'
-    elif scene == 'bikes':
-        video_path = '../results/bikes.mp4'
-    elif scene == 'dog':
-        video_path = '../hdr_video_data/Dog-3Exp-2Stop_maskrcnn/'
-    elif scene == 'bear':
-        video_path = '../hdr_video_data/bear.mp4'
-    elif scene == 'lamp':
-        video_path = '../hdr_video_data/10-11-19.14.50_seq_grab_loop_0912_3stop_2exps_3s_12.0g_wb/'
-    elif scene == 'channel':
-        video_path = '../hdr_video_data/10-11-16.12.47_seq_grab_loop_0912_2stop_3exps_3s_12.0g_wb/'
-    elif scene == 'worker':
-        video_path = '../hdr_video_data/10-11-10.58.42_seq_grab_loop_0912_3stop_2exps_3s_wb/'
-    elif scene == 'girl':
-        video_path = '../hdr_video_data/11-22-17.38.00_seq_grab_loop_0912_2stop_3exps_4s_wb/'
-    elif scene == 'sky':
-        video_path = '../hdr_video_data/11-22-08.15.12_seq_grab_loop_0912_3stop_2exps_3s_wb/'
-    elif scene == 'deblur':
-        video_path = '../hdr_video_data/IMG_0029/input2'
-    elif scene == 'deblur3':
-        video_path = '../hdr_video_data/IMG_0029/input3'
-    elif scene == 'deblur4':
-        video_path = '../hdr_video_data/IMG_0029/input4'
-    elif scene == 'deblur5':
-        video_path = '../hdr_video_data/IMG_0029/input5'
-    elif scene == 'deblur6':
-        video_path = '../hdr_video_data/IMG_0029/input6'
-    elif scene == 'deblur7':
-        video_path = '../hdr_video_data/IMG_0029/input7'
-    elif scene == 'zhangqi':
-        video_path = '../hdr_video_data/zhangqi/'
-    elif scene == 'fy1':
-        video_path = '../hdr_video_data/AIStage/fy1'
-    elif scene == 'fy2':
-        video_path = '../hdr_video_data/AIStage/fy2'
-    elif scene == 'fy3':
-        video_path = '../hdr_video_data/AIStage/fy3'
-    elif scene == 'fy4':
-        video_path = '../hdr_video_data/AIStage/fy4'
-    elif scene == 'denoise':
-        video_path = '../hdr_video_data/Denoise/'
-    elif scene == 'fishing':
-        video_path = '../hdr_video_data/NTIRE21_HDR_valid/fishing/'
-    elif scene == 'box':
-        video_path = '../hdr_video_data/HDR-NeRFdata/box/'
-    elif scene == 'computer':
-        video_path = '../hdr_video_data/HDR-NeRFdata/computer/'
-    elif scene == 'flower':
-        video_path = '../hdr_video_data/HDR-NeRFdata/flower/'
-    elif scene == 'luckycat':
-        video_path = '../hdr_video_data/HDR-NeRFdata/luckycat/'
-    elif scene == 'StaticBatman_MF':
-        video_path = '../hdr_video_data/MFME/StaticBatman/mf/'
-    elif scene == 'StaticBatman_ME':
-        video_path = '../hdr_video_data/MFME/StaticBatman/me/'
-    elif scene == 'StaticBatman_MFME':
-        video_path = '../hdr_video_data/MFME/StaticBatman/mfme/'
-    elif scene == 'DynamicBatman_MF':
-        video_path = '../hdr_video_data/MFME/DynamicBatman/mf/'
-    elif scene == 'DynamicBatman_ME':
-        video_path = '../hdr_video_data/MFME/DynamicBatman/me/'
-    elif scene == 'DynamicBatman_MFME':
-        video_path = '../hdr_video_data/MFME/DynamicBatman/mfme/'
-    # Blender MFME data
-    elif scene == 'BathRoom3':
-        video_path = '../hdr_video_data/MFME_blender_3/BathRoom/'
-    elif scene == 'Dog3':
-        video_path = '../hdr_video_data/MFME_blender_3/Dog/'
-    elif scene == 'Sponza3':
-        video_path = '../hdr_video_data/MFME_blender_3/Sponza/'
-    elif scene == 'YellowDog3':
-        video_path = '../hdr_video_data/MFME_blender_3/YellowDog/'
 
-    elif scene == 'BathRoom5':
-        video_path = '../hdr_video_data/MFME_blender_5/BathRoom/'
-    elif scene == 'Dog5':
-        video_path = '../hdr_video_data/MFME_blender_5/Dog/'
-    elif scene == 'Sponza5':
-        video_path = '../hdr_video_data/MFME_blender_5/Sponza/'
-    elif scene == 'YellowDog5':
-        video_path = '../hdr_video_data/MFME_blender_5/YellowDog/'
+    # MFME data (Blender, static)
+    if scene == 'BathRoom':
+        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_blender/BathRoom/'
+    elif scene == 'Dog':
+        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_blender/Dog/'
+    elif scene == 'Sponza':
+        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_blender/Sponza/'
+    elif scene == 'YellowDog':
+        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_blender/YellowDog/'
 
-    elif scene == 'BathRoom9':
-        video_path = '../hdr_video_data/MFME_blender_9/BathRoom/'
-    elif scene == 'Dog9':
-        video_path = '../hdr_video_data/MFME_blender_9/Dog/'
-    elif scene == 'Sponza9':
-        video_path = '../hdr_video_data/MFME_blender_9/Sponza/'
-    elif scene == 'YellowDog9':
-        video_path = '../hdr_video_data/MFME_blender_9/YellowDog/'
-    # Nikon MFME data
-    elif scene == 'Arch3':
-        video_path = '../hdr_video_data/MFME_nikon_3/Arch/'
-    elif scene == 'Bike3':
-        video_path = '../hdr_video_data/MFME_nikon_3/Bike/'
-    elif scene == 'BookShelf3':
-        video_path = '../hdr_video_data/MFME_nikon_3/BookShelf/'
-    elif scene == 'FlowerShelf3':
-        video_path = '../hdr_video_data/MFME_nikon_3/FlowerShelf/'
-    elif scene == 'MusicTiger3':
-        video_path = '../hdr_video_data/MFME_nikon_3/MusicTiger/'
-    elif scene == 'Plants3':
-        video_path = '../hdr_video_data/MFME_nikon_3/Plants/'
-    elif scene == 'Sculpture3':
-        video_path = '../hdr_video_data/MFME_nikon_3/Sculpture/'
-    elif scene == 'Tree3':
-        video_path = '../hdr_video_data/MFME_nikon_3/Tree/'
+    # MFME data (Nikon, static)
+    elif scene == 'BookShelf':
+        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_nikon/BookShelf/'
+    elif scene == 'FlowerShelf':
+        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_nikon/FlowerShelf/'
+    elif scene == 'MusicTiger':
+        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_nikon/MusicTiger/'
+    elif scene == 'Sculpture':
+        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_nikon/Sculpture/'
 
-    elif scene == 'Arch5':
-        video_path = '../hdr_video_data/MFME_nikon_5/Arch/'
-    elif scene == 'Bike5':
-        video_path = '../hdr_video_data/MFME_nikon_5/Bike/'
-    elif scene == 'BookShelf5':
-        video_path = '../hdr_video_data/MFME_nikon_5/BookShelf/'
-    elif scene == 'FlowerShelf5':
-        video_path = '../hdr_video_data/MFME_nikon_5/FlowerShelf/'
-    elif scene == 'MusicTiger5':
-        video_path = '../hdr_video_data/MFME_nikon_5/MusicTiger/'
-    elif scene == 'Plants5':
-        video_path = '../hdr_video_data/MFME_nikon_5/Plants/'
-    elif scene == 'Sculpture5':
-        video_path = '../hdr_video_data/MFME_nikon_5/Sculpture/'
-    elif scene == 'Tree5':
-        video_path = '../hdr_video_data/MFME_nikon_5/Tree/'
-
-    elif scene == 'Arch9':
-        video_path = '../hdr_video_data/MFME_nikon_9/Arch/'
-    elif scene == 'Bike9':
-        video_path = '../hdr_video_data/MFME_nikon_9/Bike/'
-    elif scene == 'BookShelf9':
-        video_path = '../hdr_video_data/MFME_nikon_9/BookShelf/'
-    elif scene == 'FlowerShelf9':
-        video_path = '../hdr_video_data/MFME_nikon_9/FlowerShelf/'
-    elif scene == 'MusicTiger9':
-        video_path = '../hdr_video_data/MFME_nikon_9/MusicTiger/'
-    elif scene == 'Plants9':
-        video_path = '../hdr_video_data/MFME_nikon_9/Plants/'
-    elif scene == 'Sculpture9':
-        video_path = '../hdr_video_data/MFME_nikon_9/Sculpture/'
-    elif scene == 'Tree9':
-        video_path = '../hdr_video_data/MFME_nikon_9/Tree/'
-
-    # HDR Dynamic data
-    elif scene == 'BarbequeDay':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/BarbequeDay/'
-    elif scene == 'LadySitting':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/LadySitting/'
-    elif scene == 'ManStanding':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/ManStanding/'
-    elif scene == 'PeopleStanding':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/PeopleStanding/'
-    elif scene == 'PeopleTalking':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/PeopleTalking/'
-    elif scene == '168':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/168/'
-    elif scene == '161':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/161/'
-    elif scene == '122':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/122/'
-    elif scene == 'BabyAtWindow':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/BabyAtWindow/'
-    elif scene == 'ChristmasRider':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/ChristmasRider/'
-    elif scene == 'FeedingTime':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/FeedingTime/'
-    elif scene == 'HighChair':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/HighChair/'
+    # Multi-exposure data (dynamic)
     elif scene == 'LadyEating':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/LadyEating/'
+        video_path = '../hdr_video_data_release/multi-exposure/LadyEating/'
+    elif scene == 'BabyAtWindow':
+        video_path = '../hdr_video_data_release/multi-exposure/BabyAtWindow/'
+    elif scene == 'ChristmasRider':
+        video_path = '../hdr_video_data_release/multi-exposure/ChristmasRider/'
     elif scene == 'PianoMan':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/PianoMan/'
+        video_path = '../hdr_video_data_release/multi-exposure/PianoMan/'
     elif scene == 'SantasLittleHelper':
-        video_path = '../hdr_video_data/SIGGRAPH17_HDR_Testset/SantasLittleHelper/'
+        video_path = '../hdr_video_data_release/multi-exposure/SantasLittleHelper/'
 
-    # Multi-focus Dynamic Data
-    elif scene == 'SmileFlower':
-        video_path = '../hdr_video_data/MF_nikon/SmileFlower/'
-    elif scene == 'SmilingFlower':
-        video_path = '../hdr_video_data/MF_nikon/SmilingFlower/'
-    elif scene == 'SmilingFlowerL0':
-        video_path = '../hdr_video_data/MF_nikon/SmilingFlowerL0/'
-    elif scene == 'BatMan':
-        video_path = '../hdr_video_data/MF_nikon/BatMan/'
+    # Multi-focus Data (static)
     elif scene == 'MF001':
-        video_path = '../hdr_video_data/MF_nikon/MF001/'
+        video_path = '../hdr_video_data_release/multi-focus/MF001/'
     elif scene == 'MF002':
-        video_path = '../hdr_video_data/MF_nikon/MF002/'
+        video_path = '../hdr_video_data_release/multi-focus/MF002/'
     elif scene == 'MF003':
-        video_path = '../hdr_video_data/MF_nikon/MF003/'
+        video_path = '../hdr_video_data_release/multi-focus/MF003/'
     elif scene == 'MF004':
-        video_path = '../hdr_video_data/MF_nikon/MF004/'
+        video_path = '../hdr_video_data_release/multi-focus/MF004/'
     elif scene == 'MF005':
-        video_path = '../hdr_video_data/MF_nikon/MF005/'
+        video_path = '../hdr_video_data_release/multi-focus/MF005/'
     elif scene == 'MF006':
-        video_path = '../hdr_video_data/MF_nikon/MF006/'
+        video_path = '../hdr_video_data_release/multi-focus/MF006/'
     elif scene == 'MF007':
-        video_path = '../hdr_video_data/MF_nikon/MF007/'
+        video_path = '../hdr_video_data_release/multi-focus/MF007/'
     elif scene == 'MF008':
-        video_path = '../hdr_video_data/MF_nikon/MF008/'
+        video_path = '../hdr_video_data_release/multi-focus/MF008/'
 
-    # Lytro data
-    elif scene == 'lytro01':
-        video_path = '../hdr_video_data/MFIF/lytro_01/'
-    elif scene == 'lytro02':
-        video_path = '../hdr_video_data/MFIF/lytro_02/'
-    elif scene == 'lytro03':
-        video_path = '../hdr_video_data/MFIF/lytro_03/'
-    elif scene == 'lytro04':
-        video_path = '../hdr_video_data/MFIF/lytro_04/'
-    elif scene == 'lytro05':
-        video_path = '../hdr_video_data/MFIF/lytro_05/'
-    elif scene == 'lytro06':
-        video_path = '../hdr_video_data/MFIF/lytro_06/'
-    elif scene == 'lytro07':
-        video_path = '../hdr_video_data/MFIF/lytro_07/'
-    elif scene == 'lytro08':
-        video_path = '../hdr_video_data/MFIF/lytro_08/'
-    elif scene == 'lytro09':
-        video_path = '../hdr_video_data/MFIF/lytro_09/'
-    elif scene == 'lytro10':
-        video_path = '../hdr_video_data/MFIF/lytro_10/'
-    
+    # Video deblur data
+    elif scene == 'Kitchen':
+        video_path = '../hdr_video_data_release/video_deblur/Kitchen/'
+    elif scene == 'Road':
+        video_path = '../hdr_video_data_release/video_deblur/Road/'
+
+    # Video HDR imaging data
+    elif scene == 'Night':
+        video_path = '../hdr_video_data_release/video_hdr/Night/'
+    elif scene == 'Worker':
+        video_path = '../hdr_video_data_release/video_hdr/Worker/'
+
     return video_path

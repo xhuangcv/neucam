@@ -121,7 +121,7 @@ class Video(Dataset):
             else:
                 self.vid = np.zeros([max_frame, H, W, 3])
 
-            # Load optical flow
+            # Load estimated optical flow
             self.flow = None
             # if load_flow:
             #     self.flow = np.zeros([N, H, W, 6])

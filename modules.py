@@ -376,23 +376,26 @@ class FocalMLP(nn.Module):
         return x
 
 class LearnFocal(nn.Module):
-    '''Learn the exposure of each frame.'''
+    '''Learn the focus of each frame.'''
     def __init__(self, focal_list=[-1., -1., 0., 1., 1.], requires_grad=False):
         super().__init__()
-        exps = torch.tensor(focal_list, requires_grad=requires_grad)
-        self.exps = nn.Parameter(exps)
+        if isinstance(focal_list, list):
+            focus = torch.tensor(focal_list, requires_grad=requires_grad)
+        else:
+            focus = torch.zeros(focal_list, requires_grad=True)
+        self.focus = nn.Parameter(focus)
 
     def forward(self):
-        # return torch.clip(self.exps, -1, 1) # ensure the exposure in [-3, 3]
-        return self.exps # ensure the exposure in [-3, 3]
+        # return torch.clip(self.focus, -1, 1) # ensure the exposure in [-3, 3]
+        return self.focus # ensure the exposure in [-3, 3]
 
     def get_minmax(self):
-        return torch.cat([torch.min(self.exps).unsqueeze(0), torch.max(self.exps).unsqueeze(0)], 0)
+        return torch.cat([torch.min(self.focus).unsqueeze(0), torch.max(self.focus).unsqueeze(0)], 0)
 
     def get_mid(self):
-        value, _ = torch.sort(self.exps)
-        return value[len(self.exps) // 2]
-
+        value, _ = torch.sort(self.focus)
+        return value[len(self.focus) // 2]
+    
 
 class LearnExps(nn.Module):
     '''Learn the exposure of each frame.'''

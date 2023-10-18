@@ -19,19 +19,16 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
     
     epochs = opt.num_epochs
     lr = opt.lr
-    lr_decay = opt.lr_decay
     steps_til_summary = opt.steps_til_summary
     epochs_til_checkpoint=opt.epochs_til_ckpt
     flow_weights = 1000
     start_weight = flow_weights
     use_mask = False
-    # if opt.stage1 != -1:
-    #     use_mask = True
     
 
     opt_parameters = [{'params':models['atlas_b'].parameters()}]
     if models['tm'] != None:
-        opt_parameters.append({'params':models['tm'].parameters()}) # pretrain model with a small learning rate
+        opt_parameters.append({'params':models['tm'].parameters()})
     if models['uv_b'] != None:
         opt_parameters.append({'params':models['uv_b'].parameters()})
     if models['uv_f'] != None:
@@ -54,8 +51,6 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
     optim = torch.optim.Adam(lr=lr, params=opt_parameters)
 
     if os.path.exists(model_dir):
-        # val = input("The model directory %s exists. Overwrite? (y/n)"%model_dir)
-        # if val == 'y':
         shutil.rmtree(model_dir)
 
     os.makedirs(model_dir)
@@ -90,8 +85,6 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
         for epoch in range(epochs):
             if not epoch % epochs_til_checkpoint and epoch:
                 utils.save_model(models, os.path.join(checkpoints_dir, 'model_epoch_%04d.pth' % epoch))
-                # np.savetxt(os.path.join(checkpoints_dir, 'train_losses_epoch_%04d.txt' % epoch),
-                #            np.array(train_losses))
 
             for step, (model_input, gt) in enumerate(train_dataloader):
                 start_time = time.time()
@@ -202,6 +195,7 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
                     # flow_loss_b = utils.flow_loss(models['uv_b'], model_input['coords'], model_input['flow'], video_shape, uv_b['coords'])
                     # losses.update({'flow_loss_b':flow_loss_b * flow_weights})
 
+                    # For the aligned image stack, the flow is set to zero
                     flow_loss_b = utils.flow_loss_zeros(models['uv_b'], model_input['coords'], video_shape, uv_b['coords'], use_alpha=False)
                     losses.update({'flow_loss_b':flow_loss_b * flow_weights})
 
@@ -232,6 +226,7 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
 
                         sparsity_loss2 = torch.mean(-1 / (torch.log(alpha + 1e-24) + torch.log(1-alpha + 1e-24) )) * opt.sparsity_loss
                         losses.update({'sparsity_loss2':sparsity_loss2})
+
                     # Alpha loss
                     if opt.alpha_loss:
                         # alpha_loss = torch.mean(-1 / (torch.log(alpha + 1e-24) + torch.log(1-alpha + 1e-24) )) * opt.alpha_loss_w
@@ -243,9 +238,9 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
                         mask_loss = ((alpha-model_input['mask']) ** 2).mean() * opt.mask_loss_w
                         losses.update({'mask_loss':mask_loss})
 
-                # Unit exposure loss and gradient loss.
+                # White balance loss and gradient loss.
                 if models['tm'] is not None:
-                    # Unit exposure loss
+                    # White balance loss 
                     zero_loss = torch.mean(torch.abs(models['tm'](torch.zeros([1,3]).cuda(), torch.zeros([1,1]).cuda()) - opt.fixed_value))
                     losses.update({'ue_loss':zero_loss})
 
@@ -254,14 +249,7 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
                     rand_exposure = torch.rand(10000, 1, requires_grad=True) * 6 - 3.0 # radiance in [-3, 3]
                     _, grads_tm = models['tm'](rand_radiance.cuda(), rand_exposure.cuda(), output_grads=True)
                     grad_loss = torch.nn.functional.relu(-grads_tm) * 1e6
-                    losses.update({'grad_loss':grad_loss})
-                
-                # if models['blur'] is not None:
-                #     weight_loss =  torch.mean(torch.abs(1.0-kernel_weights[ref_idx])) * 0.01
-                #     offset_loss1 =  torch.mean(torch.abs(y_offset[ref_idx])) * 0.01
-                #     offset_loss2 =  torch.mean(torch.abs(x_offset[ref_idx])) * 0.01
-                    
-                #     losses.update({'weight_loss':weight_loss + offset_loss1 + offset_loss2})
+                    losses.update({'grad_loss':grad_loss})           
 
                 # Total training loss.
                 train_loss = 0.
@@ -303,40 +291,14 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
                             writer.add_scalar("val_loss", np.mean(val_losses), total_steps)
                         models['atlas_b'].train()
                 
-                # Update learning rate
-                # if total_steps < opt.stage1:
-                # decay_rate = 0.1
-                # decay_steps = lr_decay * 1000
-                # new_lrate = lr * (decay_rate ** (total_steps / decay_steps))
-                # for param_group in optim.param_groups:
-                #     if param_group['lr'] > 1e-5:
-                #         param_group['lr'] = new_lrate
-
-                # if total_steps == opt.stage1:
-                #     opt_parameters = [{'params':models['atlas_b'].parameters(), 'lr':1e-6}]
-                #     if models['uv_b'] != None:
-                #         opt_parameters.append({'params':models['uv_b'].parameters()})
-                #     if models['tm'] != None:
-                #         opt_parameters.append({'params':models['tm'].parameters()})
-                #     if models['blur'] != None:
-                #         opt_parameters.append({'params':models['blur'].parameters()})
-                #     if models['exp'] != None:
-                #         opt_parameters.append({'params':models['exp'].parameters()})
-                #     if models['depth'] != None:
-                #         opt_parameters.append({'params':models['depth'].parameters()})
-
-                #     optim = torch.optim.Adam(lr=1e-5, params=opt_parameters)
-                #     use_mask = False
-                #     opt.rigidity_loss = True
 
                 if flow_weights > 0.001:
                     decay_rate = 0.1
                     decay_steps = 10000
                     flow_weights = start_weight * (decay_rate ** (total_steps / decay_steps))
 
-                if total_steps == opt.stage1:
+                if total_steps == opt.start_freeze_tm: # freeze tone-mapping model and learned exposure
                     opt_parameters = [{'params':models['atlas_b'].parameters()}]
-                    # opt_parameters = []
                     if models['uv_b'] != None:
                         opt_parameters.append({'params':models['uv_b'].parameters()})
                     if models['uv_f'] != None:
@@ -345,23 +307,14 @@ def train(models, train_dataloader, model_dir, loss_fn, summary_fn, val_dataload
                         opt_parameters.append({'params':models['atlas_f'].parameters()})
                     if models['alpha'] != None:
                         opt_parameters.append({'params':models['alpha'].parameters()})
-                    # if models['tm'] != None:
-                    #     opt_parameters.append({'params':models['tm'].parameters()})
                     if models['blur'] != None:
                         opt_parameters.append({'params':models['blur'].parameters(), 'lr':1e-6})
-                    # if models['exp'] != None:
-                    #     opt_parameters.append({'params':models['exp'].parameters()})
-                    # if models['depth'] != None:
-                    #     opt_parameters.append({'params':models['depth'].parameters()})
 
                     optim = torch.optim.Adam(lr=1e-5, params=opt_parameters)
                     use_mask = True
-                    # opt.rigidity_loss = False
 
                 total_steps += 1
         utils.save_model(models, os.path.join(checkpoints_dir, 'model_final.pth'))
-        # np.savetxt(os.path.join(checkpoints_dir, 'train_losses_final.txt'),
-        #            np.array(train_losses))
 
 
 class LinearDecaySchedule():

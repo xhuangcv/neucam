@@ -15,7 +15,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 video_path = utils.load_data_path(opt.dataset)
 vid_dataset = dataio.Video(video_path, opt.seq_size, load_gt=True, load_mask=opt.mask_loss,  load_flow=opt.flow_loss,
-                           load_weights=opt.stage1, load_depth=opt.use_depth, not_load_exps=opt.learn_exp, load_gamma=opt.use_random_gamma)
+                           load_weights=opt.start_freeze_tm, load_depth=opt.use_depth, not_load_exps=opt.learn_exp, load_gamma=opt.use_random_gamma)
 if opt.patch_sample:
     coord_dataset = dataio.Implicit3DWrapperPatch(vid_dataset, sidelength=vid_dataset.shape, sample_fraction=opt.sample_frac)
 else:
@@ -88,8 +88,9 @@ if opt.learn_exp:
 # Define focus model.
 model_focal = None
 if opt.learn_focal:
-    # model_focal = modules.LearnFocal([-1., -1., 0., 1., 1.], False).to(device)
-    model_focal = modules.LearnFocal(opt.focal_list, False).to(device)
+    model_focal = modules.LearnFocal(vid_dataset.shape[0]).to(device)
+    if len(opt.focal_list) > 1:
+        model_focal = modules.LearnFocal(opt.focal_list, True).to(device)
 
 # Define exposure model.
 model_depth = None
@@ -118,26 +119,27 @@ if opt.deblur:
 # Define tone-mapping model.
 model_tm = None
 if opt.pre_hdr:
-    model_tm = modules.TonemapNet()
-    if opt.load_tm:
-        ckp = torch.load(opt.tm_model_path)
-        model_tm.load_state_dict(ckp['model_tm_state_dict'])
-    model_tm.to(device)
+    model_tm = modules.TonemapNet().to(device)
 
-# Pretrain uv model.
+# Warm up tone-mapping model.
+if opt.tm_pretrain:
+    model_tm = utils.warm_tm(model_tm, pretrain_iters=500)
+
+
+# Warm up uv model.
 if opt.uv_pretrain:
     if model_uv_b is not None:
-        model_uv_b = utils.pre_train_mapping(model_mapping=model_uv_b, shape=vid_dataset.shape, 
+        model_uv_b = utils.warm_mapping(model_mapping=model_uv_b, shape=vid_dataset.shape, 
                                              uv_mapping_scale=opt.uv_mapping_scale, 
-                                             pretrain_iters=opt.pretrain_iters, device=device)
+                                             pretrain_iters=100, device=device)
     if model_uv_f is not None:
-        model_uv_f = utils.pre_train_mapping(model_mapping=model_uv_f, shape=vid_dataset.shape, 
+        model_uv_f = utils.warm_mapping(model_mapping=model_uv_f, shape=vid_dataset.shape, 
                                              uv_mapping_scale=opt.uv_mapping_scale,
-                                             pretrain_iters=opt.pretrain_iters, device=device)
+                                             pretrain_iters=100, device=device)
 
-# Pretrain alpha model.
+# Warm up alpha model.
 if opt.alpha_pretrain and model_alpha is not None and opt.mask_loss:
-    model_alpha = utils.pre_train_alpha(model_alpha=model_alpha, dataset=vid_dataset, device=device)
+    model_alpha = utils.warm_alpha(model_alpha=model_alpha, dataset=vid_dataset, device=device)
 
 # Root path for results. 
 if opt.experiment_name == 'debug':

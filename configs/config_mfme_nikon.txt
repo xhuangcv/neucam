@@ -1,0 +1,107 @@
+### General training options ###
+logging_root='../results/'
+experiment_name=MusicTiger
+lr=1e-4
+fixed_value = 0
+offset_size = 5
+patch_size = 9
+focal_list = [-1., 0., 1.]
+num_epochs=50000
+epochs_til_ckpt=2000
+steps_til_summary=1000
+
+# BookShelf, FlowerShelf, MusicTiger, or Sculpture
+dataset=YellowDog 
+
+sample_frac=3.5e-2
+seq_size = [3, 300, 450]
+tm_pretrain
+use_random_gamma
+start_freeze_tm=-1
+pre_hdr
+deblur
+learn_exp
+learn_focal
+
+### All losses ###
+# rigidity_loss
+# sparsity_loss
+# alpha_loss
+# mask_loss
+# flow_loss
+
+### Loss weights ###
+# rigidity_loss_w=1e-2
+# sparsity_loss_w=5e-3
+# alpha_loss_w=1e-3
+# mask_loss_w=2
+# mask_loss_step=10000
+# flow_loss_steps=50000
+# rigidity_loss_steps=60000
+
+
+### Setting of model_atlas_b ###
+atlas_b_type = 'sine'
+atlas_b_mode = 'mlp'
+atlas_b_hidden_dim = 512
+atlas_b_num_layers = 3
+atlas_b_in_dim = 2
+atlas_b_out_dim = 3
+atlas_b_num_frequencies = 7
+
+### Setting of model_atlas_f ###
+atlas_f_type = 'sine'
+atlas_f_mode = 'mlp'
+atlas_f_hidden_dim = 512
+atlas_f_num_layers = 3
+atlas_f_in_dim = 2
+atlas_f_out_dim = 3
+atlas_f_num_frequencies = 7
+
+### Setting of model_uv_b ###
+uv_b_hidden_dim = 512
+uv_b_num_layers = 4
+uv_b_in_dim = 3
+uv_b_out_dim = 2
+uv_b_skip = [4]
+uv_b_last_func = 'tanh'
+# uv_b_use_encoding 
+# uv_b_num_frequencies
+
+### Setting of model_uv_f ###
+uv_f_hidden_dim=256
+uv_f_num_layers=8
+uv_f_in_dim = 3
+uv_f_out_dim = 2
+uv_f_skip = [4]
+uv_f_last_func = 'tanh'
+uv_f_use_encoding
+uv_f_num_frequencies = 3
+
+### Setting of model_alpha ###
+alpha_hidden_dim=512
+alpha_num_layers=4
+alpha_in_dim = 3
+alpha_out_dim = 1
+alpha_skip = [4]
+alpha_last_func = 'sigmoid'
+alpha_use_encoding
+alpha_num_frequencies = 3
+
+### Setting of model_blur ###
+blur_hidden_dim=64
+blur_num_layers=4
+blur_in_dim = 3
+blur_out_dim = 27 # 9 dims for kernel weights, 18 dims for xy shift 
+blur_skip = [4]
+blur_last_func = 'both'
+# blur_use_encoding
+# blur_num_frequencies = 3
+
+### For testing ###
+# render_focal
+chunk = 2048
+save_atlas
+save_gt
+save_frame
+# edited_video
