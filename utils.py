@@ -748,64 +748,64 @@ def load_data_path(scene):
 
     # MFME data (Blender, static)
     if scene == 'BathRoom':
-        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_blender/BathRoom/'
+        video_path = './dataset/MFME/MFME_blender/BathRoom/'
     elif scene == 'Dog':
-        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_blender/Dog/'
+        video_path = './dataset/MFME/MFME_blender/Dog/'
     elif scene == 'Sponza':
-        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_blender/Sponza/'
+        video_path = './dataset/MFME/MFME_blender/Sponza/'
     elif scene == 'YellowDog':
-        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_blender/YellowDog/'
+        video_path = './dataset/MFME/MFME_blender/YellowDog/'
 
     # MFME data (Nikon, static)
     elif scene == 'BookShelf':
-        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_nikon/BookShelf/'
+        video_path = './dataset/MFME/MFME_nikon/BookShelf/'
     elif scene == 'FlowerShelf':
-        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_nikon/FlowerShelf/'
+        video_path = './dataset/MFME/MFME_nikon/FlowerShelf/'
     elif scene == 'MusicTiger':
-        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_nikon/MusicTiger/'
+        video_path = './dataset/MFME/MFME_nikon/MusicTiger/'
     elif scene == 'Sculpture':
-        video_path = '../hdr_video_data_release/multi-focus_multi-exposure/MFME_nikon/Sculpture/'
+        video_path = './dataset/MFME/MFME_nikon/Sculpture/'
 
-    # Multi-exposure data (dynamic)
+    # ME-dynamic data
     elif scene == 'LadyEating':
-        video_path = '../hdr_video_data_release/multi-exposure/LadyEating/'
+        video_path = './dataset/ME-dynamic/LadyEating/'
     elif scene == 'BabyAtWindow':
-        video_path = '../hdr_video_data_release/multi-exposure/BabyAtWindow/'
+        video_path = './dataset/ME-dynamic/BabyAtWindow/'
     elif scene == 'ChristmasRider':
-        video_path = '../hdr_video_data_release/multi-exposure/ChristmasRider/'
+        video_path = './dataset/ME-dynamic/ChristmasRider/'
     elif scene == 'PianoMan':
-        video_path = '../hdr_video_data_release/multi-exposure/PianoMan/'
+        video_path = './dataset/ME-dynamic/PianoMan/'
     elif scene == 'SantasLittleHelper':
-        video_path = '../hdr_video_data_release/multi-exposure/SantasLittleHelper/'
+        video_path = './dataset/ME-dynamic/SantasLittleHelper/'
 
     # Multi-focus Data (static)
     elif scene == 'MF001':
-        video_path = '../hdr_video_data_release/multi-focus/MF001/'
+        video_path = './dataset/multi-focus/MF001/'
     elif scene == 'MF002':
-        video_path = '../hdr_video_data_release/multi-focus/MF002/'
+        video_path = './dataset/multi-focus/MF002/'
     elif scene == 'MF003':
-        video_path = '../hdr_video_data_release/multi-focus/MF003/'
+        video_path = './dataset/multi-focus/MF003/'
     elif scene == 'MF004':
-        video_path = '../hdr_video_data_release/multi-focus/MF004/'
+        video_path = './dataset/multi-focus/MF004/'
     elif scene == 'MF005':
-        video_path = '../hdr_video_data_release/multi-focus/MF005/'
+        video_path = './dataset/multi-focus/MF005/'
     elif scene == 'MF006':
-        video_path = '../hdr_video_data_release/multi-focus/MF006/'
+        video_path = './dataset/multi-focus/MF006/'
     elif scene == 'MF007':
-        video_path = '../hdr_video_data_release/multi-focus/MF007/'
+        video_path = './dataset/multi-focus/MF007/'
     elif scene == 'MF008':
-        video_path = '../hdr_video_data_release/multi-focus/MF008/'
+        video_path = './dataset/multi-focus/MF008/'
 
     # Video deblur data
     elif scene == 'Kitchen':
-        video_path = '../hdr_video_data_release/video_deblur/Kitchen/'
+        video_path = './dataset/Video-deblur/Kitchen/'
     elif scene == 'Road':
-        video_path = '../hdr_video_data_release/video_deblur/Road/'
+        video_path = './dataset/Video-deblur/Road/'
 
     # Video HDR imaging data
     elif scene == 'Night':
-        video_path = '../hdr_video_data_release/video_hdr/Night/'
+        video_path = './dataset/Video-hdr/Night/'
     elif scene == 'Worker':
-        video_path = '../hdr_video_data_release/video_hdr/Worker/'
+        video_path = './dataset/Video-hdr/Worker/'
 
     return video_path

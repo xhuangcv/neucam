@@ -45,8 +45,7 @@ def config_parser():
     p.add_argument('--alpha_mlp', action="store_true", help='Learn the alpha blending between background and foreground using an mlp.')
     p.add_argument('--seq_size', type=int, action='append', help='[length, height, width] of training video.')
     p.add_argument('--focal_list', type=float, action='append', help='Focal length of each frame, we can easily set to [-1, 0, 1].')
-    p.add_argument('--patch_mode', default=0, type=int, help='Sample mode of blur kernel.') # TODO
-    p.add_argument('--patch_sample', action="store_true", help='Whether to learn the alpha using an mlp.') # TODO
+    p.add_argument('--patch_sample', action="store_true", help='Use patch-based sampling.')
 
     p.add_argument('--use_random_gamma', action="store_true", help='Apply gamma correction to both the predicted image and the ground truth image to enhance performance.')
     p.add_argument('--alpha_pretrain', action="store_true", help='Warm up of alpha model.')
@@ -147,8 +146,6 @@ def config_parser():
     p.add_argument('--blur_last_func', type=str, default='tanh', help='The nonlinear function for final output tensor.')
     p.add_argument('--blur_use_encoding', default=False, action="store_true", help='Use positional enconding.')
     p.add_argument('--blur_num_frequencies', type=int, default=7, help='Frequencies of positional encoding.')
-
-
 
     # For testing
     p.add_argument('--save_frame', default=False, action="store_true", help='Save the predicted images.')

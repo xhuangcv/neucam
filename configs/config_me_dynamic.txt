@@ -1,5 +1,5 @@
 ### General training options ###
-logging_root='../results/'
+logging_root='./results/'
 experiment_name=PianoMan
 lr=1e-4
 fixed_value = 0
