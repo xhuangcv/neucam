@@ -20,7 +20,7 @@ This is the official implementation of the paper "Inverting the Imaging Process 
 ## Get started
 If you want to reproduce all the results shown in the paper, you can then set up a conda environment with all dependencies like so:
 ```
-conda env create -f environment.yml
+conda env create -f environment.txt
 conda activate neucam
 ```
 
